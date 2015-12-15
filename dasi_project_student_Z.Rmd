@@ -1,0 +1,147 @@
+---
+title: "STUDENT Z'S PROJECT"
+date: "2015-11-02"
+output:
+  html_document:
+    theme: cerulean
+---
+
+<!-- For more info on RMarkdown see http://rmarkdown.rstudio.com/ -->
+
+<!-- Enter the code required to load your data in the space below. The data will be loaded but the line of code won't show up in your write up (echo=FALSE) in order to save space-->
+```{r echo=FALSE}
+load(url("http://bit.ly/dasi_gss_data"))
+```
+
+<!-- In the remainder of the document, add R code chunks as needed -->
+
+### Introduction:
+
+Since 1972, the General Social Survey (GSS) has been monitoring societal change and studying the growing complexity of American society. The GSS aims to gather data on contemporary American society in order to monitor and explain trends and constants in attitudes, behaviors, and attributes; to examine the structure and functioning of society in general as well as the role played by relevant subgroups and to compare the United States to other societies in order to place American society in comparative perspective and develop cross-national models of human society.
+
+The goal of this project is to find out if there is an association between people with higher education (people who have finished at least the 9th grade) and newspaper reading habit (how often they read newspapers).
+In short, is there a correlation between education degree and newspaper reading. The data is described in more detail below.
+
+These two variables are interesting since if there is a correlation then this could be interpreted as higher education also means greater curiosity about the outside world. On the whole, this is positive for democracy since educated people have a better understanding of what they are voting for. Education is a cornerstone of democracy.
+
+### Data:
+
+Data used for this project is General Social Survey (GSS) conducted between 1972 - 2012: A sociological survey used to collect data on demographic characteristics and attitudes of residents of the United States. There are a total of `r nrow(gss)` cases and `r ncol(gss)` variables in this dataset. Actual data may be downloaded here: http://bit.ly/dasi_gss_data. See reference below for more details.
+
+This is an observational, retrospective study. It is based on random sampling from the population but there is no random assignment. The findings from this analysis can be generalized to a subset of the population (among people who have finished at least 9th grade). On the other hand, we cannot establish causal links between the variables of interest since there was no random assignment in this study (there may e.g. be a confounding variable that affect the variables). 
+
+The selected variables for this study are DEGREE (categorical, ordinal) and NEWS (categorical, ordinal):
+
+__DEGREE - RS HIGHEST DEGREE__
+
+If finished 9th-12th grade: Did you ever get a high school diploma or a GED certificate?
+
+VALUE |	LABEL
+----- | -----
+0	    | LT HIGH SCHOOL
+1	    | HIGH SCHOOL
+2	    | JUNIOR COLLEGE
+3	    | BACHELOR
+4	    | GRADUATE
+NA	  | IAP
+NA	  | DK
+NA	  | NA
+
+__NEWS - HOW OFTEN DOES R READ NEWSPAPER__
+
+How often do you read the newspaper - every day, a few times a week, once a week, less than once a week, or never?
+
+VALUE	| LABEL
+----- | -----
+NA    | IAP
+1	    | EVERYDAY
+2	    | FEW TIMES A WEEK
+3	    | ONCE A WEEK
+4	    | LESS THAN ONCE WK
+5	    | NEVER
+NA	  | DK
+NA	  | NA
+
+### Exploratory data analysis:
+
+Summary statistics for the two variables:
+```{r}
+summary(gss$degree)
+summary(gss$news)
+```
+A page of the data set that includes all of the relevant columns:
+```{r}
+gss[10000:10100, c("degree", "news")]
+```
+
+Visualization as a mosaic plot:
+```{r}
+degree_news = table(gss$degree, gss$news)
+mosaicplot(degree_news)
+```
+
+The exploratory data analysis suggests that there is a correlation between education degree and newspaper reading. There is an obvious trend (whereas only Junior College students do not completely follow).
+
+### Inference:
+
+##### Hypotheses
+
+H~0~ = Education degree and newspaper reading are independent.   
+H~A~ = Education degree and newspaper reading are dependent. Newspaper reading frequency do vary by education degree.
+
+##### Chi-square test of independence
+
+Here we are doing indefernce on two categorial variables where both variables have more than 2 levels. Thus, ANOVA and the Chi-square test of independence would be two possible methods but I think the Chi-square test of independence is most appropriate here.
+
+$$ \chi^2=\sum_{k=1}^{n} \frac{(O_k - E_k)^2}{E_k} $$
+where $O$ = observed, $E$ = expected and $k$ = number of cells.
+$$ df = (R - 1) * (C - 1) $$
+where $R$ = number of rows and $C$ = number of columns.
+
+##### Conditions for the chi-square test
+
+1. Independence
+      + We have a random sample
+      + Sample is less than 10% of the American population
+      + Each case only contributes to one particular scenario
+2. Sample size
+      + Each particular scenario must have at least 5 expected cases
+      
+So, we have a random sample of the whole US population so sample is definitevly less than 10% of population. Each case contributes to only one particular scenario since the levels for both variables are mutually exclusive. Also, each particular scenario has at least 111 cases (Junior College - Never). Thus, both conditions are fulfilled.
+
+##### Inference
+
+First, create the contingency table from the two categorial variables:
+```{r}
+tab_degree_news = table(gss$degree, gss$news)
+tab_degree_news
+```
+Then use summary function to perform a chi-square test of the contingency table:
+```{r}
+summary(tab_degree_news)
+```
+
+Let's also do the same thing using the inference function.
+
+As already pointed out, the response variable is NEWS and the grouping variable is DEGREE. Parameter of interest is proportion and we're doing a hypothesis test.
+
+```{r}
+source("http://bit.ly/dasi_inference")
+inference (y = gss$news, x = gss$degree, est = "proportion", type = "ht", alternative = "greater", method = "theoretical", order = c("LT HIGH SCHOOL","HIGH SCHOOL","JUNIOR COLLEGE","BACHELOR","GRADUATE"))
+```
+
+### Conclusion:
+
+Both calculatons include a p-value. Conventionally, a p-value of less than 0.05 indicates that the variables are likely not independent. Here the p-value is extremely small and, thus, we reject the null hypothesis and conclude that education degree and newspaper reading are dependent.
+
+Education degree and newspaper reading are clearly dependent. This study did only include people who have not finished at least the 9th grade. On the other hand, I would guess that a majority of the American population do indeed have some sort of education. Also, we could extend this study by doing multiple pairwise comparisons to find out which pair do have the most variability among the groups.
+
+Possible future research would be to compare the results against other countries. Or even wider, is education and democracy dependent, but this is another question. 
+
+### References:
+
+Smith, Tom W., Michael Hout, and Peter V. Marsden. General Social Survey, 1972-2012 [Cumulative File]. ICPSR34802-v1. Storrs, CT: Roper Center for Public Opinion Research, University of Connecticut /Ann Arbor, MI: Inter-university Consortium for Political and Social Research [distributors], 2013-09-11. doi:10.3886/ICPSR34802.v1
+
+### Appendix:
+
+Persistent URL: http://doi.org/10.3886/ICPSR34802.v1
